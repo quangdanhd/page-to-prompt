@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Page-to-Prompt – Turn any web page into a ready-to-use AI prompt
+    </title>
+    <meta
+      name="description"
+      content="Page-to-Prompt is a Chrome extension that turns the page you're reading into a clean prompt for your AI assistant. $5.99 per month."
+    />
+    <style>
+      :root {
+        --bg: #eef2f7;
+        --ink: #14213d;
+        --muted: #4b5a75;
+        --line: #c9d3e3;
+        --accent: #2f4bd8;
+        --accent-ink: #fff;
+        --card: #fff;
+        --code: #14213d;
+        --code-ink: #e6ecfa;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e1424;
+          --ink: #e6ecfa;
+          --muted: #9fb0cf;
+          --line: #26324f;
+          --accent: #7b93ff;
+          --accent-ink: #0e1424;
+          --card: #161f36;
+          --code: #0a0f1c;
+          --code-ink: #e6ecfa;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 17px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      }
+      a {
+        color: var(--accent);
+      }
+      :focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .wrap {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      header {
+        padding: 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: -0.01em;
+      }
+      nav a {
+        margin-left: 20px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 15px;
+      }
+      nav a:hover {
+        color: var(--ink);
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: center;
+        padding: 48px 0 72px;
+      }
+      h1 {
+        font-size: clamp(34px, 5vw, 54px);
+        line-height: 1.08;
+        letter-spacing: -0.025em;
+        margin: 0 0 20px;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 19px;
+        margin: 0 0 28px;
+        max-width: 34em;
+      }
+      .btn {
+        display: inline-block;
+        padding: 13px 22px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 2px solid var(--accent);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      .btn.ghost {
+        color: var(--accent);
+        margin-left: 10px;
+      }
+      .note {
+        font-size: 14px;
+        color: var(--muted);
+        margin-top: 14px;
+      }
+      .demo {
+        display: grid;
+        gap: 12px;
+      }
+      .pane {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+        background: var(--card);
+        font-size: 14px;
+      }
+      .pane b {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .messy {
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .messy s {
+        opacity: 0.55;
+      }
+      .out {
+        background: var(--code);
+        color: var(--code-ink);
+        border-color: var(--code);
+        font: 13.5px/1.55 ui-monospace, Menlo, Consolas, monospace;
+        white-space: pre-wrap;
+      }
+      .out b {
+        color: var(--code-ink);
+        opacity: 0.6;
+      }
+      section {
+        padding: 56px 0;
+        border-top: 1px solid var(--line);
+      }
+      h2 {
+        font-size: 30px;
+        letter-spacing: -0.02em;
+        margin: 0 0 12px;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 32px;
+        max-width: 36em;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        counter-reset: s;
+      }
+      .steps li {
+        counter-increment: s;
+      }
+      .steps li::before {
+        content: counter(s);
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .steps h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+      .steps p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .video {
+        aspect-ratio: 16/9;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--card);
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        text-align: center;
+        padding: 20px;
+      }
+      .video iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 12px;
+      }
+      .price {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: start;
+      }
+      .plan {
+        border: 2px solid var(--accent);
+        border-radius: 14px;
+        padding: 28px;
+        background: var(--card);
+      }
+      .plan .amt {
+        font-size: 46px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+      .plan .amt small {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .plan ul {
+        padding-left: 20px;
+        margin: 18px 0 22px;
+        color: var(--muted);
+      }
+      .plan .btn {
+        display: block;
+        text-align: center;
+      }
+      dl {
+        margin: 0;
+      }
+      dt {
+        font-weight: 600;
+        margin-top: 18px;
+      }
+      dd {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+      .legal h3 {
+        margin: 28px 0 6px;
+        font-size: 19px;
+      }
+      .legal p,
+      .legal li {
+        color: var(--muted);
+        font-size: 16px;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 28px 0 48px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      @media (max-width: 760px) {
+        .hero,
+        .price {
+          grid-template-columns: 1fr;
+        }
+        .steps {
+          grid-template-columns: 1fr;
+        }
+        .btn.ghost {
+          margin: 10px 0 0;
+        }
+        nav a:first-child {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">Page-to-Prompt</div>
+        <nav>
+          <a href="#how">How it works</a><a href="#demo">Demo</a
+          ><a href="#pricing">Pricing</a
+          ><a href="#privacy">Privacy &amp; Terms</a>
+        </nav>
+      </header>
+
+      <main>
+        <div class="hero">
+          <div>
+            <h1>Turn any web page into a clean AI prompt.</h1>
+            <p class="lead">
+              Page-to-Prompt is a Chrome extension. Click it on an article, doc,
+              or product page and get the readable text, formatted and ready to
+              paste into ChatGPT, Claude, or Gemini.
+            </p>
+            <a class="btn primary" href="#pricing">See pricing</a
+            ><a class="btn ghost" href="#demo">Watch the demo</a>
+            <p class="note">Coming soon to the Chrome Web Store.</p>
+          </div>
+          <div
+            class="demo"
+            aria-label="Example of page content becoming a prompt"
+          >
+            <div class="pane messy">
+              <b>The page</b>Menu · Subscribe · <s>Advertisement</s> Breaking:
+              city council approves new transit plan… <s>Related stories</s>
+              <s>Sign in</s> Share
+            </div>
+            <div class="pane out">
+              <b>Your prompt</b>Title: City council approves new transit plan
+              Source: example.com/news Content: The city council voted on
+              Tuesday to… Summarize this page in five bullet points.
+            </div>
+          </div>
+        </div>
+
+        <section id="how">
+          <h2>How it works</h2>
+          <p class="sub">Three steps, no copy-and-paste cleanup.</p>
+          <ol class="steps">
+            <li>
+              <h3>Open a page</h3>
+              <p>
+                Go to any article, documentation page, or product listing you
+                want to work with.
+              </p>
+            </li>
+            <li>
+              <h3>Click the extension</h3>
+              <p>
+                Page-to-Prompt removes menus, ads, and clutter and keeps the
+                main content.
+              </p>
+            </li>
+            <li>
+              <h3>Paste into your AI tool</h3>
+              <p>
+                The prompt is copied to your clipboard with the title, source
+                link, and your instruction.
+              </p>
+            </li>
+          </ol>
+        </section>
+
+        <section id="demo">
+          <h2>Demo</h2>
+          <p class="sub">
+            A short video of the extension running on a real page.
+          </p>
+          <div class="video">
+            <iframe src="https://www.youtube.com/embed/bH_9pVEX6Ds" title="Page-to-Prompt demo" allowfullscreen></iframe>
+          </div>
+        </section>
+
+        <section id="pricing">
+          <h2>Pricing</h2>
+          <p class="sub">
+            One simple plan. Payments are handled securely by Lemon Squeezy.
+          </p>
+          <div class="price">
+            <div class="plan">
+              <div class="amt">$5.99 <small>/ month</small></div>
+              <ul>
+                <li>Unlimited page-to-prompt conversions</li>
+                <li>Works on any public web page</li>
+                <li>All future updates included</li>
+                <li>Cancel anytime</li>
+              </ul>
+              <a
+                class="btn primary"
+                href="#"
+                >Subscribe</a
+              >
+            </div>
+            <dl>
+              <dt>What do I get after paying?</dt>
+              <dd>
+                A license key by email. Enter it in the extension to unlock it.
+              </dd>
+              <dt>Is this a service?</dt>
+              <dd>
+                No. Page-to-Prompt is a digital software product sold as a
+                subscription license.
+              </dd>
+              <dt>How do I cancel?</dt>
+              <dd>
+                Use the link in your Lemon Squeezy receipt email, or contact us.
+              </dd>
+            </dl>
+          </div>
+        </section>
+
+        <section id="privacy" class="legal">
+          <h2>Privacy &amp; Terms</h2>
+          <h3>Privacy</h3>
+          <p>
+            Page-to-Prompt reads the page you are viewing only when you click
+            the extension. The content is processed in your browser and placed
+            on your clipboard. We do not sell your data and do not store the
+            pages you convert. Payment and billing details are handled by Lemon
+            Squeezy; we never see your card number.
+          </p>
+          <h3>Terms</h3>
+          <ul>
+            <li>Your subscription renews monthly at $5.99 until you cancel.</li>
+            <li>
+              You are responsible for following the terms of the websites and AI
+              tools you use with the extension.
+            </li>
+            <li>
+              The software is provided as is. Refund requests are handled
+              according to the policy shown at checkout.
+            </li>
+          </ul>
+          <h3>Contact</h3>
+          <p><a href="mailto:hudatech.extensions@gmail.com">hudatech.extensions@gmail.com</a></p>
+        </section>
+      </main>
+
+      <footer>© 2026 Page-to-Prompt. All rights reserved.</footer>
+    </div>
+  </body>
+</html>
