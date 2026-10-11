@@ -6,9 +6,10 @@
     <title>
       Page-to-Prompt – Turn any web page into a ready-to-use AI prompt
     </title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta
       name="description"
-      content="Page-to-Prompt is a Chrome extension that turns the page you're reading into a clean prompt for your AI assistant. $5.99 per month."
+      content="Page-to-Prompt is a Chrome extension that sends highlighted text, page content, URL or title to Claude, ChatGPT, Grok, Gemini, Perplexity, Copilot or Qwen with your own saved prompts. $5.99 per month."
     />
     <style>
       :root {
@@ -21,6 +22,7 @@
         --card: #fff;
         --code: #14213d;
         --code-ink: #e6ecfa;
+        --hl: #ffe27a;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -33,6 +35,7 @@
           --card: #161f36;
           --code: #0a0f1c;
           --code-ink: #e6ecfa;
+          --hl: rgba(123, 147, 255, 0.4);
         }
       }
       * {
@@ -123,37 +126,64 @@
         display: grid;
         gap: 12px;
       }
-      .pane {
+      .demo-page {
+        margin: 0;
+        padding: 18px 20px;
         border: 1px solid var(--line);
         border-radius: 10px;
-        padding: 16px 18px;
         background: var(--card);
-        font-size: 14px;
+        font-size: 16px;
+        line-height: 1.6;
       }
-      .pane b {
-        display: block;
-        font-size: 13px;
+      mark.sweep {
+        color: inherit;
+        background: linear-gradient(var(--hl), var(--hl)) no-repeat 0 100% / 0
+          100%;
+        border-radius: 3px;
+        animation: sweep 3.2s ease-in-out infinite alternate;
+      }
+      @keyframes sweep {
+        0%,
+        15% {
+          background-size: 0 100%;
+        }
+        70%,
+        100% {
+          background-size: 100% 100%;
+        }
+      }
+      .demo-join {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         color: var(--muted);
-        margin-bottom: 6px;
+        font-size: 13px;
         font-weight: 600;
       }
-      .messy {
-        color: var(--muted);
-        line-height: 1.4;
+      .demo-join::before,
+      .demo-join::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
       }
-      .messy s {
-        opacity: 0.55;
-      }
-      .out {
+      .demo-prompt {
+        padding: 16px 20px;
+        border-radius: 10px;
         background: var(--code);
         color: var(--code-ink);
-        border-color: var(--code);
-        font: 13.5px/1.55 ui-monospace, Menlo, Consolas, monospace;
-        white-space: pre-wrap;
+        font-size: 15px;
+        line-height: 1.55;
       }
-      .out b {
-        color: var(--code-ink);
-        opacity: 0.6;
+      .demo-prompt span {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .demo-prompt code {
+        font: 13.5px/1.5 ui-monospace, Menlo, Consolas, monospace;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(123, 147, 255, 0.28);
       }
       section {
         padding: 56px 0;
@@ -171,8 +201,8 @@
       }
       .steps {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px 24px;
         padding: 0;
         margin: 0;
         list-style: none;
@@ -201,6 +231,50 @@
         margin: 0;
         color: var(--muted);
         font-size: 16px;
+      }
+      kbd {
+        font: 600 0.85em ui-monospace, Menlo, Consolas, monospace;
+        padding: 2px 7px;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        background: var(--card);
+        white-space: nowrap;
+      }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .feature {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 22px 24px;
+        background: var(--card);
+      }
+      .feature h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .ai-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0;
+        margin: 14px 0 0;
+        list-style: none;
+      }
+      .ai-list li {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 14px;
+        color: var(--ink);
       }
       .video {
         aspect-ratio: 16/9;
@@ -283,19 +357,24 @@
         .price {
           grid-template-columns: 1fr;
         }
-        .steps {
+        .steps,
+        .features {
           grid-template-columns: 1fr;
         }
         .btn.ghost {
           margin: 10px 0 0;
         }
-        nav a:first-child {
+        nav a:nth-child(-n + 2) {
           display: none;
         }
       }
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
+        }
+        mark.sweep {
+          animation: none;
+          background-size: 100% 100%;
         }
       }
     </style>
@@ -305,8 +384,8 @@
       <header>
         <div class="brand">Page-to-Prompt</div>
         <nav>
-          <a href="#how">How it works</a><a href="#demo">Demo</a
-          ><a href="#pricing">Pricing</a
+          <a href="#features">Features</a><a href="#how">How it works</a
+          ><a href="#demo">Demo</a><a href="#pricing">Pricing</a
           ><a href="#privacy">Privacy &amp; Terms</a>
         </nav>
       </header>
@@ -314,56 +393,117 @@
       <main>
         <div class="hero">
           <div>
-            <h1>Turn any web page into a clean AI prompt.</h1>
+            <h1>Turn any web page into a ready-to-use AI prompt.</h1>
             <p class="lead">
-              Page-to-Prompt is a Chrome extension. Click it on an article, doc,
-              or product page and get the readable text, formatted and ready to
-              paste into ChatGPT, Claude, or Gemini.
+              Page-to-Prompt is a Chrome extension that creates and manages your
+              prompts. Send highlighted text, the page content, its URL or its
+              title to Claude, ChatGPT, Grok, Gemini, Perplexity, Copilot or
+              Qwen in one click.
             </p>
-            <a class="btn primary" href="#pricing">See pricing</a
+            <a
+              class="btn primary"
+              href="https://chromewebstore.google.com/detail/page-to-prompt/daohfbaahhchiihnfhonbhbbelfnkllm"
+              target="_blank"
+              rel="noopener"
+              >Add to Chrome</a
             ><a class="btn ghost" href="#demo">Watch the demo</a>
-            <p class="note">Coming soon to the Chrome Web Store.</p>
+            <p class="note">Available on the Chrome Web Store.</p>
           </div>
-          <div
-            class="demo"
-            aria-label="Example of page content becoming a prompt"
-          >
-            <div class="pane messy">
-              <b>The page</b>Menu · Subscribe · <s>Advertisement</s> Breaking:
-              city council approves new transit plan… <s>Related stories</s>
-              <s>Sign in</s> Share
-            </div>
-            <div class="pane out">
-              <b>Your prompt</b>Title: City council approves new transit plan
-              Source: example.com/news Content: The city council voted on
-              Tuesday to… Summarize this page in five bullet points.
+          <div class="demo" aria-hidden="true">
+            <p class="demo-page">
+              Researchers say the new battery design keeps
+              <mark class="sweep"
+                >most of its capacity after 2,000 charge cycles</mark
+              >, which is far longer than current cells.
+            </p>
+            <div class="demo-join">becomes</div>
+            <div class="demo-prompt">
+              <span>Explain this in simple terms:</span>
+              <code>{{SELECTED_TEXT}}</code>
             </div>
           </div>
         </div>
 
+        <section id="features">
+          <h2>Features</h2>
+          <p class="sub">
+            Your prompts, your selection, your AI account, all connected from
+            any web page.
+          </p>
+          <div class="features">
+            <div class="feature">
+              <h3>Choose what to send</h3>
+              <p>
+                Pick Highlighted Text, Page Content, Page Url or Page Title as
+                the source for your prompt.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Seven AI assistants</h3>
+              <p>Open your prompt in the assistant you prefer.</p>
+              <ul class="ai-list">
+                <li>Claude</li>
+                <li>ChatGPT</li>
+                <li>Grok</li>
+                <li>Gemini</li>
+                <li>Perplexity</li>
+                <li>Copilot</li>
+                <li>Qwen</li>
+              </ul>
+            </div>
+            <div class="feature">
+              <h3>Your own prompt library</h3>
+              <p>
+                Save and manage prompts, and add <kbd>{{SELECTED_TEXT}}</kbd>
+                wherever the selected text should go. Edit a prompt before you
+                send it, or type a new one on the spot.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Conversations that continue</h3>
+              <p>
+                The extension remembers the AI tab it connected to, so the next
+                prompt continues the same conversation instead of starting a new
+                one. Use several AIs at once; each AI tab is remembered
+                separately.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section id="how">
           <h2>How it works</h2>
-          <p class="sub">Three steps, no copy-and-paste cleanup.</p>
+          <p class="sub">Four steps, no copy-and-paste cleanup.</p>
           <ol class="steps">
             <li>
-              <h3>Open a page</h3>
+              <h3>Open the extension</h3>
               <p>
-                Go to any article, documentation page, or product listing you
-                want to work with.
+                Right-click and choose Page to Prompt, or press
+                <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>. You can change
+                the shortcut at <kbd>chrome://extensions/shortcuts</kbd>.
               </p>
             </li>
             <li>
-              <h3>Click the extension</h3>
+              <h3>Choose a source and an AI</h3>
               <p>
-                Page-to-Prompt removes menus, ads, and clutter and keeps the
-                main content.
+                Select Highlighted Text, Page Content, Page Url or Page Title,
+                then pick Claude, ChatGPT, Grok, Gemini, Perplexity, Copilot or
+                Qwen.
               </p>
             </li>
             <li>
-              <h3>Paste into your AI tool</h3>
+              <h3>Pick a prompt</h3>
               <p>
-                The prompt is copied to your clipboard with the title, source
-                link, and your instruction.
+                Click a saved prompt to open the AI right away. Click the edit
+                button next to it to load it into the input box and adjust it
+                first, or write a new prompt there.
+              </p>
+            </li>
+            <li>
+              <h3>Keep the conversation going</h3>
+              <p>
+                Choose another prompt later and it continues in the same AI tab
+                you already opened.
               </p>
             </li>
           </ol>
@@ -375,7 +515,11 @@
             A short video of the extension running on a real page.
           </p>
           <div class="video">
-            <iframe src="https://www.youtube.com/embed/bH_9pVEX6Ds" title="Page-to-Prompt demo" allowfullscreen></iframe>
+            <iframe
+              src="https://www.youtube.com/embed/bH_9pVEX6Ds"
+              title="Page-to-Prompt demo"
+              allowfullscreen
+            ></iframe>
           </div>
         </section>
 
@@ -395,7 +539,9 @@
               </ul>
               <a
                 class="btn primary"
-                href="#"
+                href="https://hudatech.lemonsqueezy.com/checkout/buy/b155e759-7594-4499-b817-72c593e1abed"
+                target="_blank"
+                rel="noopener"
                 >Subscribe</a
               >
             </div>
@@ -403,6 +549,13 @@
               <dt>What do I get after paying?</dt>
               <dd>
                 A license key by email. Enter it in the extension to unlock it.
+              </dd>
+              <dt>Do I need an AI account?</dt>
+              <dd>
+                Yes. Claude, ChatGPT, Grok, Gemini, Perplexity, Copilot and Qwen
+                run in your own web account, and the extension is not affiliated
+                with them. Page-to-Prompt only connects the page you are viewing
+                to the AI.
               </dd>
               <dt>Is this a service?</dt>
               <dd>
@@ -421,18 +574,21 @@
           <h2>Privacy &amp; Terms</h2>
           <h3>Privacy</h3>
           <p>
-            Page-to-Prompt reads the page you are viewing only when you click
-            the extension. The content is processed in your browser and placed
-            on your clipboard. We do not sell your data and do not store the
-            pages you convert. Payment and billing details are handled by Lemon
-            Squeezy; we never see your card number.
+            Page-to-Prompt reads the page you are viewing only when you use the
+            extension. Your selected text, page content, URL or title is
+            processed in your browser and placed in the AI site you choose,
+            which you access with your own account and which has its own privacy
+            policy. We do not sell your data and do not store the pages you
+            convert. Payment and billing details are handled by Lemon Squeezy;
+            we never see your card number.
           </p>
           <h3>Terms</h3>
           <ul>
             <li>Your subscription renews monthly at $5.99 until you cancel.</li>
             <li>
               You are responsible for following the terms of the websites and AI
-              tools you use with the extension.
+              tools you use with the extension. Those AI services are separate
+              from Page-to-Prompt and are not provided by us.
             </li>
             <li>
               The software is provided as is. Refund requests are handled
@@ -440,7 +596,11 @@
             </li>
           </ul>
           <h3>Contact</h3>
-          <p><a href="mailto:hudatech.extensions@gmail.com">hudatech.extensions@gmail.com</a></p>
+          <p>
+            <a href="mailto:hudatech.extensions@gmail.com"
+              >hudatech.extensions@gmail.com</a
+            >
+          </p>
         </section>
       </main>
 
